@@ -103,27 +103,9 @@ def fuzzyEye(iris_pos, iris2_pos, headDir):
     x2_fuzzy_left=x2_left
     x2_fuzzy_right=x2_right+0.05
 
-#   eyePos = ctrl.Antecedent(np.arange(x_left, (x_right+0.05), 0.05), 'eye position')
-#   x_fuzzy_center=x_center
-#   x_fuzzy_left=x_left
-#   x_fuzzy_right=x_right+0.05
-
-#   eyePos2 = ctrl.Antecedent(np.arange(x2_left, (x2_right+0.05), 0.05), 'left eye position')
-#   x2_fuzzy_center=x2_center
-#   x2_fuzzy_left=x2_left
-#   x2_fuzzy_right=x2_right+0.05
   
   eyeDir = ctrl.Consequent(np.arange(0, 1.05, 0.05), 'eye direction')
-  
-#   #right eye position membership function
-#   eyePos['low'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left, x_fuzzy_left, x_fuzzy_center])#left point, middle point, rigt point
-#   eyePos['med'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left+int((x_fuzzy_center-x_fuzzy_left)/2), x_fuzzy_center, x_fuzzy_right-int((x_fuzzy_right-x_fuzzy_center)/2)])
-#   eyePos['high'] = fuzz.trimf(eyePos.universe, [x_fuzzy_center, x_fuzzy_right, x_fuzzy_right])
-  
-#   #left eye position membership function
-#   eyePos2['low'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left, x2_fuzzy_left, x2_fuzzy_center])#left point, middle point, rigt point
-#   eyePos2['med'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left+int((x2_fuzzy_center-x2_fuzzy_left)/2), x2_fuzzy_center, x2_fuzzy_right-int((x2_fuzzy_right-x2_fuzzy_center)/2)])
-#   eyePos2['high'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_center, x2_fuzzy_right, x2_fuzzy_right])
+
 
   #right eye position membership function
   eyePos['low'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left-10, x_fuzzy_left-10, x_fuzzy_center])#left point, middle point, rigt point
@@ -172,7 +154,7 @@ def fuzzyEye(iris_pos, iris2_pos, headDir):
         print(eyeLvl.output['eye direction'])
     return gazeDir
   elif headDir =="Head Right":
-    if 0.4<=eye_output<=0.45:
+    if 0.35<=eye_output<=0.45:
         gazeDir="Eye Contact"
         print("eye contact")
         print(eyeLvl.output['eye direction'])
