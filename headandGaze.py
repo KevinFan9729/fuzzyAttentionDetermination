@@ -1,17 +1,12 @@
 import cv2
 import mediapipe as mp
 import numpy as np
-import pyttsx3
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 mp_face_mesh = mp.solutions.face_mesh
-
-speech_engine = pyttsx3.init()
-voices = speech_engine.getProperty('voices')
-speech_engine.setProperty('voice', voices[3].id)
 
 
 font = cv2.FONT_HERSHEY_SIMPLEX 
@@ -62,12 +57,6 @@ x2_right_list=[]
 x_right=0
 x2_right=0
 
-speak_once=0
-
-def speak(text):
-  speech_engine.say(text)
-  speech_engine.runAndWait()
-
 
 def fuzzyEye(iris_pos, iris2_pos, headDir):
   if headDir == "Head Left":
@@ -108,20 +97,32 @@ def fuzzyEye(iris_pos, iris2_pos, headDir):
 
 
   #right eye position membership function
-  eyePos['low'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left-10, x_fuzzy_left-10, x_fuzzy_center])#left point, middle point, rigt point
-  eyePos['med'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left+int((x_fuzzy_center-x_fuzzy_left-10)/2), x_fuzzy_center, x_fuzzy_right+10-int((x_fuzzy_right+10-x_fuzzy_center)/2)])
-  eyePos['high'] = fuzz.trimf(eyePos.universe, [x_fuzzy_center, x_fuzzy_right+10, x_fuzzy_right+10])
+  # eyePos['low'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left-10, x_fuzzy_left-10, x_fuzzy_center])#left point, middle point, rigt point
+  # eyePos['med'] = fuzz.trimf(eyePos.universe, [x_fuzzy_left+int((x_fuzzy_center-x_fuzzy_left-10)/2), x_fuzzy_center, x_fuzzy_right+10-int((x_fuzzy_right+10-x_fuzzy_center)/2)])
+  # eyePos['high'] = fuzz.trimf(eyePos.universe, [x_fuzzy_center, x_fuzzy_right+10, x_fuzzy_right+10])
+  
+  
+  eyePos['low'] = fuzz.gaussmf(eyePos.universe, x_fuzzy_left, 8)
+  eyePos['med'] = fuzz.gaussmf(eyePos.universe, x_fuzzy_center,8)
+  eyePos['high'] = fuzz.gaussmf(eyePos.universe, x_fuzzy_right,8)
   
   #left eye position membership function
-  eyePos2['low'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left-10, x2_fuzzy_left-10, x2_fuzzy_center])#left point, middle point, rigt point
-  eyePos2['med'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left+int((x2_fuzzy_center-x2_fuzzy_left-10)/2), x2_fuzzy_center, x2_fuzzy_right+10-int((x2_fuzzy_right+10-x2_fuzzy_center)/2)])
-  eyePos2['high'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_center, x2_fuzzy_right+10, x2_fuzzy_right+10])
+  # eyePos2['low'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left-10, x2_fuzzy_left-10, x2_fuzzy_center])#left point, middle point, rigt point
+  # eyePos2['med'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_left+int((x2_fuzzy_center-x2_fuzzy_left-10)/2), x2_fuzzy_center, x2_fuzzy_right+10-int((x2_fuzzy_right+10-x2_fuzzy_center)/2)])
+  # eyePos2['high'] = fuzz.trimf(eyePos2.universe, [x2_fuzzy_center, x2_fuzzy_right+10, x2_fuzzy_right+10])
 
+  eyePos2['low'] = fuzz.gaussmf(eyePos2.universe, x2_fuzzy_left, 8)
+  eyePos2['med'] = fuzz.gaussmf(eyePos2.universe, x2_fuzzy_center,8)
+  eyePos2['high'] = fuzz.gaussmf(eyePos2.universe, x2_fuzzy_right,8)
   
   #eye direction level membership function
-  eyeDir['left'] = fuzz.trimf(eyeDir.universe, [0, 0, 0.5])#left point, middle point, rigt point
-  eyeDir['center'] = fuzz.trimf(eyeDir.universe, [0.25,0.5,0.75])
-  eyeDir['right'] = fuzz.trimf(eyeDir.universe, [0.5, 1, 1])
+  # eyeDir['left'] = fuzz.trimf(eyeDir.universe, [0, 0, 0.5])#left point, middle point, rigt point
+  # eyeDir['center'] = fuzz.trimf(eyeDir.universe, [0.25,0.5,0.75])
+  # eyeDir['right'] = fuzz.trimf(eyeDir.universe, [0.5, 1, 1])
+  
+  eyeDir['left'] = fuzz.gaussmf(eyeDir.universe, 0, 0.1)
+  eyeDir['center'] = fuzz.gaussmf(eyeDir.universe, 0.5, 0.1)
+  eyeDir['right'] = fuzz.gaussmf(eyeDir.universe, 1, 0.1)
 
   #fuzzy rules
   rule1 = ctrl.Rule((eyePos['low'] | eyePos2['low']),eyeDir['left'])
@@ -135,9 +136,9 @@ def fuzzyEye(iris_pos, iris2_pos, headDir):
 
   eyeLvl.input['eye position'] = iris_pos
   eyeLvl.input['left eye position']=iris2_pos
-#   eyePos.view()
-#   eyePos2.view()
-#   eyeDir.view()
+  # eyePos.view()
+  # eyePos2.view()
+  # eyeDir.view()
   eyeLvl.compute()
   # a=eyeLvl.output['eye direction']
 
@@ -164,7 +165,7 @@ def fuzzyEye(iris_pos, iris2_pos, headDir):
         print(eyeLvl.output['eye direction'])
     return gazeDir
   else:
-    if 0.4<=eye_output<=0.45:
+    if 0.38<=eye_output<=0.45:
         gazeDir="Eye Contact"
         print("eye contact")
         print(eyeLvl.output['eye direction'])
@@ -239,6 +240,8 @@ def preporcess(image):
     final=cv2.flip(final, 1)
     return final
 
+
+
 with mp_face_mesh.FaceMesh(
     max_num_faces=1,
     refine_landmarks=True,#include iris
@@ -248,7 +251,7 @@ with mp_face_mesh.FaceMesh(
     success, image = cap.read()
     if not success:
       continue
-
+    
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
@@ -266,7 +269,6 @@ with mp_face_mesh.FaceMesh(
     right_iris=[]
     left_eye_keys_2d = []
     right_eye_keys_2d = []
-
 
 
     if results.multi_face_landmarks:
@@ -311,7 +313,7 @@ with mp_face_mesh.FaceMesh(
 
         # Assume no lens distortion
         dist_coeffs = np.zeros((4,1))
-        success, rot_vec, trans_vec = cv2.solvePnP(facial_keypoints_3d, facial_keypoints_2d, cam_matrix, dist_coeffs)
+        success, rot_vec, trans_vec = cv2.solvePnP(facial_keypoints_3d, facial_keypoints_2d, cam_matrix, dist_coeffs) #SOLVEPNP_ITERATIVE
 
         # Get rotational matrix
         rmat, _ = cv2.Rodrigues(rot_vec)
@@ -363,25 +365,36 @@ with mp_face_mesh.FaceMesh(
         headDir=getHeadOrientation(x,y)
         eyeDir=fuzzyEye(x_right_iris, x_left_iris, headDir)
         # print(x_left_iris,x_right_iris)
-        # attention=attentionDecsion(headDir,eyeDir)
+        attention=attentionDecsion(headDir,eyeDir)
         # recal_flag=1
         # # recalibrate(forehead_2d[0])
         # print(attention)
         # # print(x_right_iris)
         
         p1 = (int(forehead_2d[0]), int(forehead_2d[1]))
-        p2 = (int(forehead_2d[0] + y * 5) , int(forehead_2d[1] - x * 5))
+        p2 = (int(forehead_2d[0] + y * 5) , int(forehead_2d[1] + x * 5))
         
         cv2.line(image, p1, p2, (255, 0, 0), 1,cv2.LINE_AA)
         
         # Add the text on the image
-        cv2.putText(image, headDir, (20, 50), font, 2, (0, 255, 0), 2, cv2.LINE_AA)
-        cv2.putText(image, "x: " + str(np.round(x,2)), (500, 50), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
-        cv2.putText(image, "y: " + str(np.round(y,2)), (500, 100), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
-        cv2.putText(image, "z: " + str(np.round(z,2)), (500, 150), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
+        cv2.putText(image, headDir, (20, 50), font, 1, (255, 0, 0), 2, cv2.LINE_AA)
+        if eyeDir=="Eye Away":
+          cv2.putText(image, eyeDir, (20, 100), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
+        else:
+          cv2.putText(image, eyeDir, (20, 100), font, 1, (0, 255, 0), 2,cv2.LINE_AA)
+        
+        if attention=="full attention":
+          cv2.putText(image, attention, (420, 50), font, 1, (0, 255, 0), 2,cv2.LINE_AA)
+        elif attention == "semi-attention":
+          cv2.putText(image, attention, (400, 50), font, 1, (255, 0, 0), 2,cv2.LINE_AA)
+        else:
+          cv2.putText(image, attention, (420, 50), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
+        # cv2.putText(image, eyeDir, (500, 50), font, 1, (0, 0, 255), 2,cv2.LINE_AA)
 
     cv2.imshow('head and gaze', image)
     if cv2.waitKey(1) & 0xFF == 27:#escpae key
       break
+   
 
 cap.release()
+
